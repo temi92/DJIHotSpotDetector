@@ -1,2 +1,3 @@
 # DJIHotSpotDetector
-A real time solution for hotspot/fire detection from a DJI MAVIC dual enteprise. Inference is performed using deep neural networks deployed on an android device
+This project provides an ondevice AI solution for the detection of detecting hotspots or fire regions from camera footage. A fine tuning style transfer learning approach is adopted for training based on the Mobilenet V2 CNN network.
+
