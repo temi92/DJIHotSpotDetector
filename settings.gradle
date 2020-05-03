@@ -1,0 +1,3 @@
+rootProject.name='HotSpotDetection'
+include ':app'
+include ':openCVLibrary345'
