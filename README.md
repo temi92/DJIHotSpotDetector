@@ -5,7 +5,7 @@ This project provides an on device AI solution for the detection of detecting ho
 2. Android System 4.1+
 3. DJI Android SDK 4.11+
 
-##Supported DJI Products
+## Supported DJI Products
 * DJI Mavic 2 Enterprise Dual
 
 
