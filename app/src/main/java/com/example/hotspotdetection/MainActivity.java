@@ -2,8 +2,10 @@ package com.example.hotspotdetection;
 
 import android.app.Activity;
 
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 
+import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,7 +48,9 @@ import com.example.hotspotdetection.classifier.Classifier;
 import com.example.hotspotdetection.segmentation.Detector;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 
 public class MainActivity extends Activity implements TextureView.SurfaceTextureListener, View.OnClickListener {
@@ -406,6 +410,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     @Override
                     public void run() {
                         if(classifier!=null){
+                            /*
 
                             final long startTime = SystemClock.uptimeMillis();
                             final List<Classifier.Recognition> results =
@@ -414,10 +419,23 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
                            String label = results.get(0).getId() + ": "+ String.format("%.1f", results.get(0).getConfidence()*100.0f ) + "%";
                            Log.d("Detect", String.valueOf(results));
+
+
+                             */
+
+                            Map<String, Double> results = classifier.lr_recognizeImage(imageBitmap);
+                           //  Map<String, Double> results = classifier.lr_recognizeImage(grabImage());
+
+                            //get key
+                            String key = String.valueOf(results.keySet().toArray()[0] );
+                            String label = key + ": " + String.format("%.1f", results.get(key)*100.0f) + "%";
+
+
+
                            //grab copy of bitmap..
                            Bitmap bm = imageBitmap.copy(imageBitmap.getConfig(), true);
 
-                            if (results.get(0).getId().equals("fire")){
+                            if (key.equals("fire")){
                             Mat image = new Mat();
                             Utils.bitmapToMat(bm, image);
 
@@ -494,6 +512,20 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     }
 
+
+    public Bitmap grabImage(){
+        AssetManager assetManager = getAssets();
+
+        InputStream s = null;
+        try{
+            s =  assetManager.open("fire0.jpg");
+        } catch (IOException e ){
+            e.printStackTrace();
+        }
+        Bitmap bitmap = BitmapFactory.decodeStream(s);
+        return bitmap;
+
+    }
 
 
 

@@ -21,6 +21,7 @@ import android.graphics.RectF;
 import android.os.SystemClock;
 import android.util.Log;
 
+import org.ejml.simple.SimpleMatrix;
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.gpu.GpuDelegate;
@@ -39,9 +40,11 @@ import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import com.example.hotspotdetection.utils.FileUtils;
 
 /** A classifier specialized to label images using TensorFlow Lite. */
 public abstract class Classifier {
@@ -92,6 +95,10 @@ public abstract class Classifier {
 
   /** Processer to apply post processing of the output probability. */
   private final TensorProcessor probabilityProcessor;
+
+  double[] coeffs = new double[62720];
+  double [] intercept = new double [1];
+
 
   /**
    * Creates a classifier with the provided configuration.
@@ -179,6 +186,10 @@ public abstract class Classifier {
 
   /** Initializes a {@code Classifier}. */
   protected Classifier(Activity activity, Device device, int numThreads) throws IOException {
+    // load txt files...
+    FileUtils.loadFile(activity, "coeff.txt", coeffs);
+    FileUtils.loadFile(activity, "intercept.txt", intercept);
+
     tfliteModel = FileUtil.loadMappedFile(activity, getModelPath());
     switch (device) {
       case GPU:
@@ -232,10 +243,14 @@ public abstract class Classifier {
 
     long startTimeForReference = SystemClock.uptimeMillis();
     tflite.run(inputImageBuffer.getBuffer(), outputProbabilityBuffer.getBuffer().rewind());
+
+    float [] data = outputProbabilityBuffer.getFloatArray();
+
     long endTimeForReference = SystemClock.uptimeMillis();
 
     //LOGGER.v("Timecost to run model inference: " + (endTimeForReference - startTimeForReference));
     Log.d("CLASSIFIER", "timecost for inference: "+ (endTimeForReference - startTimeForReference));
+
 
     // Gets the map of label and probability.
     Map<String, Float> labeledProbability =
@@ -246,6 +261,80 @@ public abstract class Classifier {
     // Gets top-k results.
     return getTopKProbability(labeledProbability);
   }
+
+
+
+  public Map<String, Double> lr_recognizeImage(final Bitmap bitmap){
+
+    inputImageBuffer = loadImage(bitmap);
+    tflite.run(inputImageBuffer.getBuffer(), outputProbabilityBuffer.getBuffer().rewind());
+    float [] data= outputProbabilityBuffer.getFloatArray();
+    double [] data_d = new double[data.length];
+    // convert float to double...
+    //convert float to double...
+
+    for (int i =0; i < data.length; i++){
+
+      data_d[i] = data[i];
+
+    }
+
+    SimpleMatrix A = new SimpleMatrix(1,data_d.length,true, data_d);
+
+
+    SimpleMatrix B = new SimpleMatrix(coeffs.length, 1, true, coeffs);
+
+
+    // linear classifier y = mx + c
+    SimpleMatrix C = A.mult(B);
+
+    double prob =C.get(0, 0) + intercept[0];
+    prob = sigmoid(prob);
+
+    SimpleMatrix results = new SimpleMatrix(1, 2, true, 1.0 -prob, prob);
+
+    int index = getPredictedClass(results);
+    Log.d("class label ", labels.get(index));
+    Log.d("class accuracy ", String.valueOf(findMax(results)));
+
+    Map<String, Double> result = new LinkedHashMap();
+    result.put(labels.get(index), findMax(results));
+    return result;
+
+
+  }
+
+  private double sigmoid(double x)
+  {
+    return 1 / (1 + Math.exp(-x));
+  }
+
+  private  int getPredictedClass(SimpleMatrix predictions){
+
+    int argmax  =0;
+
+    for (int i =1; i < predictions.getNumElements(); ++i){
+
+      if (predictions.get(i) > predictions.get(argmax))
+        argmax = i;
+    }
+    return  argmax;
+  }
+
+
+
+  private double findMax (SimpleMatrix matrix){
+    double max = 0;
+    for (int i =0; i < matrix.getNumElements(); ++i){
+      if (matrix.get(i) > max)
+        max = matrix.get(i);
+
+    }
+
+    return max;
+  }
+
+
 
   /** Closes the interpreter and model to release resources. */
   public void close() {
@@ -281,7 +370,7 @@ public abstract class Classifier {
     // TODO(b/143564309): Fuse ops inside ImageProcessor.
     ImageProcessor imageProcessor =
         new ImageProcessor.Builder()
-            .add(new ResizeWithCropOrPadOp(cropSize, cropSize))
+            //.add(new ResizeWithCropOrPadOp(cropSize, cropSize))
             .add(new ResizeOp(imageSizeX, imageSizeY, ResizeMethod.NEAREST_NEIGHBOR))
             .add(getPreprocessNormalizeOp())
             .build();
