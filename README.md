@@ -8,4 +8,6 @@ This project provides an on device AI solution for the detection of detecting ho
 ## Supported DJI Products
 * DJI Mavic 2 Enterprise Dual
 
+![demo](python/demo.gif)
+
 
