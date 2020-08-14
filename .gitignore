@@ -12,3 +12,8 @@
 /captures
 .externalNativeBuild
 .cxx
+/openCVLibrary345/build/.transforms/aa112c23c19d15fa7fa8f918cc708916.bin
+/openCVLibrary345/build/.transforms/aa112c23c19d15fa7fa8f918cc708916/
+/app/.idea/
+/app/gradle/
+/app/local.properties

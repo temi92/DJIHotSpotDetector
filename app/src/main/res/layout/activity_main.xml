@@ -6,6 +6,8 @@
     android:orientation="vertical">
 
 
+
+
     <LinearLayout
         android:id="@+id/linearLayout1"
         android:layout_width="match_parent"
@@ -45,18 +47,17 @@
             android:layout_width="match_parent"
 
             android:layout_height="match_parent"
-            android:layout_weight=".5"
-            android:padding="0dp">
+            android:layout_weight=".5">
 
             <ImageView
                 android:id="@+id/image_cv"
-                android:padding="0dp"
-                android:layout_width="800dp"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_alignParentStart="true"
                 android:layout_gravity="center"
                 android:layout_marginStart="0dp"
-                android:scaleType="fitCenter" />
+                android:padding="0dp"
+                 />
 
 
             <TextView
@@ -70,51 +71,43 @@
 
         </RelativeLayout>
 
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal">
 
+            <Button
+                android:id="@+id/btn_capture"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:text="Capture"
+                android:background="@android:color/darker_gray"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btn_RTL"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:background="@android:color/holo_red_light"
+
+                android:text="RTL"
+                android:textSize="12sp" />
+            <Spinner android:id="@+id/spinner1"
+                android:layout_width="wrap_content"
+                android:background="@android:color/holo_blue_bright"
+
+                android:layout_height="match_parent"
+                android:entries="@array/models"/>
+        </LinearLayout>
     </LinearLayout>
 
 
-
-    <!--<TextureView
-        android:id="@+id/video_previewer_surface"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:layout_centerHorizontal="true"
-        android:layout_above="@+id/linearLayout" />
-
-    <ImageView
-        android:id="@+id/image_cv"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:layout_alignParentStart="true"/>-->
-
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/btn_capture"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:text="Capture"
-            android:textSize="12sp" />
-
-        <Button
-            android:id="@+id/btn_RTL"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:text="RTL"
-            android:textSize="12sp" />
-    </LinearLayout>
 
 
 

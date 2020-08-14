@@ -1,5 +1,7 @@
 package com.example.hotspotdetection.segmentation;
 
+import android.util.Log;
+
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -18,6 +20,7 @@ public class Detector {
 
     private List<int[]> centroids = new ArrayList<int[]>();
     private List<MatOfPoint> mCountours = new ArrayList<MatOfPoint>();
+
 
     public void process(Mat img)
     {
@@ -61,12 +64,9 @@ public class Detector {
         }
 
 
-
-       // Imgproc.drawContours(imB, mCountours, -1, new Scalar(200, 200, 0, 255), 5);
-
-
-
     }
+
+
 
 
     public List<int[]> getCentroids(){

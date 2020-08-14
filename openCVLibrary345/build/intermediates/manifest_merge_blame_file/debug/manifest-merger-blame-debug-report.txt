@@ -6,8 +6,8 @@
 6
 7    <uses-sdk
 8        android:minSdkVersion="8"
-8-->C:\Users\Drones\Desktop\DJI_stuff\HotSpotDetection\openCVLibrary345\src\main\AndroidManifest.xml
+8-->C:\Users\odusi\Documents\Projects\DJIHotSpotDetector\openCVLibrary345\src\main\AndroidManifest.xml
 9        android:targetSdkVersion="28" />
-9-->C:\Users\Drones\Desktop\DJI_stuff\HotSpotDetection\openCVLibrary345\src\main\AndroidManifest.xml
+9-->C:\Users\odusi\Documents\Projects\DJIHotSpotDetector\openCVLibrary345\src\main\AndroidManifest.xml
 10
 11</manifest>

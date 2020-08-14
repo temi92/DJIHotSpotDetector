@@ -14,8 +14,11 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,18 +45,14 @@ import dji.sdk.codec.DJICodecManager;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.useraccount.UserAccountManager;
 
-import com.example.hotspotdetection.classifier.Classifier.Device;
-import com.example.hotspotdetection.classifier.Classifier.ModelType;
-import com.example.hotspotdetection.classifier.Classifier;
-import com.example.hotspotdetection.segmentation.Detector;
+
+import com.example.hotspotdetection.classifier.SegmentationModel.Device;
+import com.example.hotspotdetection.classifier.SegmentationModel;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
+import com.example.hotspotdetection.classifier.SegmentationModel.Models;
 
-
-public class MainActivity extends Activity implements TextureView.SurfaceTextureListener, View.OnClickListener {
+public class MainActivity extends Activity implements TextureView.SurfaceTextureListener, View.OnClickListener, AdapterView.OnItemSelectedListener {
 
     private static final String TAG = MainActivity.class.getName();
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
@@ -74,16 +73,17 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
 
     private Bitmap imageBitmap;
-    private boolean loadConfig = false;
 
     private boolean isProcessingFrame = false;
 
-    //initialise classifer configurations..
-    private  Classifier classifier;
-    private ModelType model = ModelType.HOTSPOT_MODEL;
+    private SegmentationModel classifier;
+    //private ModelType model = ModelType.HOTSPOT_MODEL;
     private Device device = Device.CPU;
     private int numThreads = -1;
-    Detector detector;
+    ContourDetection detector;
+    private Spinner spinner1;
+    private Models model = Models.INDOOR_MODEL;
+
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -91,7 +91,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.d("OPENCV_STATUS", "OpenCV loaded successfully");
-                    detector = new Detector();
+                    detector = new ContourDetection();
                     break;
                 }
                 default: {
@@ -107,10 +107,16 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        spinner1 = (Spinner) findViewById(R.id.spinner1);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.models, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner1.setAdapter(adapter);
+        spinner1.setOnItemSelectedListener(this);
 
         handler = new Handler();
 
@@ -133,6 +139,31 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
 
     }
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        //String text = adapterView.getItemAtPosition(i).toString();
+        //Toast.makeText(adapterView.getContext(), text, Toast.LENGTH_SHORT).show();
+        setModel(Models.valueOf(adapterView.getItemAtPosition(i).toString()));
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
+    }
+    private void setModel(Models model){
+        if (this.model != model) {
+            this.model = model;
+            runInBackground(() -> recreateClassifier());
+
+        }
+
+
+    }
+
+
+
+
 
     protected void onProductChange() {
         initPreviewer();
@@ -423,55 +454,24 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
                              */
 
-                            Map<String, Double> results = classifier.lr_recognizeImage(imageBitmap);
-                           //  Map<String, Double> results = classifier.lr_recognizeImage(grabImage());
-
-                            //get key
-                            String key = String.valueOf(results.keySet().toArray()[0] );
-                            String label = key + ": " + String.format("%.1f", results.get(key)*100.0f) + "%";
+                            classifier.recognizeImage(imageBitmap);
+                            Bitmap finalBm = classifier.smoothBlend(imageBitmap, detector);
+                            String label = classifier.getLabel();
 
 
-
-                           //grab copy of bitmap..
-                           Bitmap bm = imageBitmap.copy(imageBitmap.getConfig(), true);
-
-                            if (key.equals("fire")){
-                            Mat image = new Mat();
-                            Utils.bitmapToMat(bm, image);
-
-                            Imgproc.cvtColor(image, image, Imgproc.COLOR_BGR2GRAY);
-                            detector.process(image);
-                            Imgproc.drawContours(image, detector.getContours(), -1, new Scalar(200, 200, 0, 255), 5);
-
-                                /*
-                                // draw centroids on contours...
-                                List<int[]> centroids = detector.getCentroids();
-                                Iterator<int[]> each = centroids.iterator();
-                                while(each.hasNext()){
-                                    int [] centroid = each.next();
-                                    Imgproc.circle(image, new Point(centroid[0],centroid[1]), 3, new Scalar(200, 200, 0, 255), 4);
-
-                                }
-                                */
-
-                                //convert mat to bitmap
-                                Utils.matToBitmap(image, bm);
-
-                            }
-
-                            Bitmap finalBm = bm;
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                        labelDisplay.setText(label);
-                                        mImageSurface.setImageBitmap(null);
-                                        mImageSurface.setImageBitmap(finalBm);
+                                    labelDisplay.setText(label);
+                                    mImageSurface.setImageBitmap(null);
+                                    mImageSurface.setImageBitmap(finalBm);
                                 }
                             });
 
                         }
                         readyForNextImage();
                     }
+
                 }
 
         );
@@ -485,7 +485,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         }
 
         try{
-            classifier = Classifier.create(this, device, numThreads);
+            classifier = SegmentationModel.create(this, this.model, device, numThreads);
 
         } catch(IOException e){
             Log.d("CLASSIFIER", "cannot load classifier");
@@ -513,6 +513,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
 
+
+
+    /*
     public Bitmap grabImage(){
         AssetManager assetManager = getAssets();
 
@@ -527,8 +530,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     }
 
-
-
+     */
 
 
 
